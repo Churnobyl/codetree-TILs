@@ -95,6 +95,8 @@ class Conveyor {
 	}
 
 	public void addAll(Conveyor from) {
+		if (from.head == null) return;
+		
 		if (tail == null) {
 			checkList.putAll(from.checkList);
 			head = from.head;
