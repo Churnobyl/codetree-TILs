@@ -1,3 +1,6 @@
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
 import java.util.Scanner;
 
 class Box {
@@ -13,12 +16,14 @@ class Box {
 class Conveyor {
 	Box head, tail;
 	int size;
+	Map<Integer, Box> checkList = new HashMap<>();
 	
 	public Conveyor() {}
 	
 	public void add(Box box) {
 		size++;
 		box.next = null;
+		checkList.put(box.id, box);
 		
 		if (head == null) {
 			head = box;
@@ -39,6 +44,7 @@ class Conveyor {
 		if (isEmpty()) return null;
 		
 		Box out = head;
+		checkList.remove(out.id);
 		
 		if (size == 1) {
 			head = null;
@@ -56,6 +62,8 @@ class Conveyor {
 
 	public Box remove(Box box) {
 		if (isEmpty()) return null;
+		
+		checkList.remove(box.id);
 		
 		if (size < 2) {
 			head = null;
@@ -83,24 +91,18 @@ class Conveyor {
 	}
 	
 	public Box find(int id) {
-		Box iterator = head;
-		
-		while (iterator != null) {
-			if (iterator.id == id) return iterator;
-			iterator = iterator.next;
-		}
-		
-		return null;
+		return checkList.getOrDefault(id, null);
 	}
 
 	public void addAll(Conveyor from) {
 		if (tail == null) {
+			checkList.putAll(from.checkList);
 			head = from.head;
 			tail = from.tail;
 			size += from.size;
 			return;
 		}
-		
+		checkList.putAll(from.checkList);
 		tail.next = from.head;
 		from.head.prev = tail;
 		tail = from.tail;
