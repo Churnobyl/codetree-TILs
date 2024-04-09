@@ -94,6 +94,20 @@ class Conveyor {
 		
 		return null;
 	}
+
+	public void addAll(Conveyor from) {
+		if (tail == null) {
+			head = from.head;
+			tail = from.tail;
+			size += from.size;
+			return;
+		}
+		
+		tail.next = from.head;
+		from.head.prev = tail;
+		tail = from.tail;
+		size += from.size;
+	}
 }
 
 class ConveyorManager {
@@ -131,6 +145,10 @@ class ConveyorManager {
 	
 	public boolean containsKey(int id) {
 		return conveyor.find(id) != null;
+	}
+	
+	public void addAll(Conveyor from) {
+		conveyor.addAll(from);
 	}
 }
 
@@ -220,9 +238,8 @@ class Solution {
 		
 		for (int i = 1; i < m; i++) {
 			if (conveyorManagers[(b_num + i) % m] != null) {
-				while (!conveyorManagers[b_num].conveyor.isEmpty()) {
-					conveyorManagers[(b_num + i) % m].add(conveyorManagers[b_num].conveyor.poll());
-				}
+				conveyorManagers[(b_num + i) % m].addAll(conveyorManagers[b_num].conveyor);
+				break;
 			}
 		}
 		
