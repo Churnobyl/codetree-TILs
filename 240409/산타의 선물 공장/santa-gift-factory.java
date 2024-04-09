@@ -79,6 +79,13 @@ class Conveyor {
 			return box;
 		}
 		
+		if (box == head) {
+			head = box.next;
+			head.prev = null;
+			size--;
+			return box;
+		}
+		
 		box.prev.next = box.next;
 		box.next.prev = box.prev;
 		size--;
