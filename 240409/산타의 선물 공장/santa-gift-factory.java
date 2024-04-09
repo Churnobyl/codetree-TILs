@@ -54,10 +54,8 @@ class Conveyor {
 		return out;
 	}
 
-	public Box remove(int r_id) {
+	public Box remove(Box box) {
 		if (isEmpty()) return null;
-		
-		Box box = find(r_id);
 		
 		if (size < 2) {
 			head = null;
@@ -108,6 +106,17 @@ class Conveyor {
 		tail = from.tail;
 		size += from.size;
 	}
+
+	public void splitAndAttach(Box box) {
+		if (box.prev == null) return;
+		
+		head.prev = tail;
+		tail.next = head;
+		tail = box.prev;
+		head = box;
+		head.prev = null;
+		tail.next = null;
+	}
 }
 
 class ConveyorManager {
@@ -133,18 +142,12 @@ class ConveyorManager {
 		return 0;
 	}
 
-	public Box remove(int r_id) {
-		return conveyor.remove(r_id);
+	public Box remove(Box box) {
+		return conveyor.remove(box);
 	}
 
-	public void check(int f_id) {
-		while (conveyor.peek().id != f_id) {
-			conveyor.add(conveyor.poll());
-		}
-	}
-	
-	public boolean containsKey(int id) {
-		return conveyor.find(id) != null;
+	public void check(Box box) {
+		conveyor.splitAndAttach(box);
 	}
 	
 	public void addAll(Conveyor from) {
@@ -204,8 +207,12 @@ class Solution {
 		Box box = null;
 		
 		for (int i = 0; i < m; i++) {
-			if (conveyorManagers[i] != null && conveyorManagers[i].containsKey(r_id)) {
-				box = conveyorManagers[i].remove(r_id);
+			if (conveyorManagers[i] != null) {
+				box = conveyorManagers[i].conveyor.find(r_id);
+				if (box == null) continue;
+				
+				box = conveyorManagers[i].remove(box);
+				break;
 			}
 		}
 				
@@ -218,10 +225,18 @@ class Solution {
 		
 		int conNum = -1;
 		
+		Box box = null;
+		
 		for (int i = 0; i < m; i++) {
-			if (conveyorManagers[i] != null && conveyorManagers[i].containsKey(f_id)) {
+			if (conveyorManagers[i] != null) {
+				box = conveyorManagers[i].conveyor.find(f_id);
+				
+				if (box == null) continue;
+				
 				conNum = i + 1;
-				conveyorManagers[i].check(f_id);
+				
+				conveyorManagers[i].check(box);
+				break;
 			}
 		}
 		
