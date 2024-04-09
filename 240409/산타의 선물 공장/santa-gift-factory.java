@@ -1,9 +1,3 @@
-import java.util.AbstractQueue;
-import java.util.ArrayDeque;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
 import java.util.Scanner;
 
 class Box {
@@ -17,16 +11,14 @@ class Box {
 }
 
 class Conveyor {
-	Map<Integer, Box> checkList = new HashMap<>();
 	Box head, tail;
 	int size;
 	
 	public Conveyor() {}
 	
 	public void add(Box box) {
-		checkList.put(box.id, box);
-		
 		size++;
+		box.next = null;
 		
 		if (head == null) {
 			head = box;
@@ -47,15 +39,15 @@ class Conveyor {
 		if (isEmpty()) return null;
 		
 		Box out = head;
-		size--;
-		checkList.remove(out.id);
 		
-		if (head == tail) {
+		if (size == 1) {
 			head = null;
 			tail = null;
+			size--;
 			return out;
 		}
 		
+		size--;
 		head = head.next;
 		head.prev = null;
 		
@@ -65,12 +57,18 @@ class Conveyor {
 	public Box remove(int r_id) {
 		if (isEmpty()) return null;
 		
-		Box box = checkList.get(r_id);
-		checkList.remove(r_id);
+		Box box = find(r_id);
 		
 		if (size < 2) {
 			head = null;
 			tail = null;
+			size--;
+			return box;
+		}
+		
+		if (box == tail) {
+			tail = box.prev;
+			tail.next = null;
 			size--;
 			return box;
 		}
@@ -84,6 +82,17 @@ class Conveyor {
 	
 	public Box peek() {
 		return head;
+	}
+	
+	public Box find(int id) {
+		Box iterator = head;
+		
+		while (iterator != null) {
+			if (iterator.id == id) return iterator;
+			iterator = iterator.next;
+		}
+		
+		return null;
 	}
 }
 
@@ -113,15 +122,15 @@ class ConveyorManager {
 	public Box remove(int r_id) {
 		return conveyor.remove(r_id);
 	}
-	
-	public boolean containsKey(int id) {
-		return conveyor.checkList.containsKey(id);
-	}
 
 	public void check(int f_id) {
 		while (conveyor.peek().id != f_id) {
 			conveyor.add(conveyor.poll());
 		}
+	}
+	
+	public boolean containsKey(int id) {
+		return conveyor.find(id) != null;
 	}
 }
 
@@ -181,7 +190,7 @@ class Solution {
 				box = conveyorManagers[i].remove(r_id);
 			}
 		}
-		
+				
 		if (box != null) System.out.println(box.id);
 		else System.out.println(-1);
 	}
