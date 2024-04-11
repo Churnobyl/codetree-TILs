@@ -15,8 +15,10 @@ class Person {
 
 	@Override
 	public String toString() {
-		return "Person [y=" + y + ", x=" + x + ", t=" + t + "]";
+		return "Person [y=" + y + ", x=" + x + ", t=" + t + ", dest=" + Arrays.toString(dest) + "]";
 	}
+
+	
 }
 
 public class Main {
@@ -155,7 +157,10 @@ public class Main {
 				person.y = distY;
 				person.x = distX;
 				person.t++;
+
 				queue.add(person);
+			} else {
+				map[distY][distX] = -t;
 			}
 		}
 	}
