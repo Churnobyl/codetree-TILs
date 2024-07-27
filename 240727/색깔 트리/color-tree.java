@@ -49,6 +49,10 @@ class UserSolution {
                 depth++;
             }
 
+            if (iterator.maxDepth <= depth) {
+                return;
+            }
+
             nodes[mId] = new Node(pId, color, maxDepth, version++);
             nodes[pId].children.add(nodes[mId]);
         } else {
