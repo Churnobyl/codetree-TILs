@@ -111,7 +111,7 @@ class UserSolution {
 
         List<Node> children = node.children;
 
-        if (children.size() == 0) {
+        if (children.isEmpty()) {
             bit |= (1 << node.color);
             allSum += 1;
             return bit;
@@ -121,7 +121,7 @@ class UserSolution {
             }
 
             int result = bitCounter(bit);
-            allSum += result * result;
+            allSum += (long) result * result;
             return bit;
         }
     }
