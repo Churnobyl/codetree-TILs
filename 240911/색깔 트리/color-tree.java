@@ -31,8 +31,7 @@ class UserSolution {
     List<Node> rootNodes = new LinkedList<>();
     long allSum;
 
-    public UserSolution() {
-    }
+    public UserSolution() {}
 
     public void addNode(int mId, int pId, int color, int maxDepth) {
         int depth = 1;
@@ -69,72 +68,63 @@ class UserSolution {
 
     public int printOneColor(int mId) {
         Node node = nodes[mId];
-        int v = node.version;
-        int thatColor = node.color;
+        int latestVersion = node.version;
+        int finalColor = node.color;
 
-        if (node.pId == -1) {
-            return thatColor;
-        }
-
-        Node iterator = nodes[node.pId];
-
-        while (iterator.pId != -1) {
-            if (v < iterator.version) {
-                thatColor = iterator.color;
+        while (node.pId != -1) {
+            Node parent = nodes[node.pId];
+            if (parent.version > latestVersion) {
+                latestVersion = parent.version;
+                finalColor = parent.color;
             }
-
-            iterator = nodes[iterator.pId];
+            node = parent;
         }
 
-        return thatColor;
+        return finalColor;
     }
 
     public long printAllPoints() {
         allSum = 0;
 
         for (Node rootNode : rootNodes) {
-            dfs(rootNode, rootNode.color, rootNode.version);
+            boolean[] usedColors = new boolean[6]; // 각 루트마다 초기화
+            dfs(rootNode, rootNode.color, rootNode.version, usedColors);
         }
 
         return allSum;
     }
 
-    private int dfs(Node node, int prevColor, int prevVersion) {
-
-        // 위의 버전이 더 최신일 경우
-        if (node.version < prevVersion) {
-            node.color = prevColor;
-            node.version = prevVersion;
+    private void dfs(Node node, int parentColor, int parentVersion, boolean[] usedColors) {
+        // 부모의 버전이 더 최신인 경우, 부모의 색상으로 갱신
+        if (node.version < parentVersion) {
+            node.color = parentColor;
+            node.version = parentVersion;
         }
 
-        int bit = (1 << node.color);
+        // 현재 노드의 색상을 사용 중으로 표시
+        usedColors[node.color] = true;
 
-        List<Node> children = node.children;
+        // 자식 노드를 순회하며 DFS 재귀 호출
+        for (Node child : node.children) {
+            boolean[] childUsedColors = new boolean[6]; // 각 자식 호출마다 초기화
+            dfs(child, node.color, node.version, childUsedColors);
 
-        if (children.isEmpty()) {
-            bit |= (1 << node.color);
-            allSum += 1;
-            return bit;
-        } else {
-            for (Node child : children) {
-                bit |= dfs(child, node.color, node.version);
+            // 자식에서 사용된 색상을 현재 노드에 누적
+            for (int i = 1; i <= 5; i++) {
+                if (childUsedColors[i]) usedColors[i] = true;
             }
-
-            int result = bitCounter(bit);
-            allSum += (long) result * result;
-            return bit;
         }
-    }
 
-    private int bitCounter(int bit) {
-        int count = 0;
-        while (bit > 0) {
-            bit &= bit - 1;
-            count++;
+        // 색상 개수 계산
+        int colorCount = 0;
+        for (boolean used : usedColors) {
+            if (used) colorCount++;
         }
-        return count;
+
+        allSum += (long) colorCount * colorCount;
     }
 }
+
 
 public class Main {
     public static void main(String[] args) {
