@@ -84,16 +84,16 @@ public class Main {
 	public static int findColor(int mId) {
 		Node node = nodes[mId];
 		
-		int latestVersion = Integer.MIN_VALUE;
+		int latestVersion =node.version;
 		int color = node.color;
 		
 		while (node.pId != -1) {
-			if (latestVersion < node.version) {
-				color = node.color;
-				latestVersion = node.version;
-			}
-			
 			node = nodes[node.pId];
+			
+			if (node.isChanged && latestVersion < node.version) {
+				color = node.color;
+				latestVersion = node.version;					
+			}
 		}
 		
 		return color;
