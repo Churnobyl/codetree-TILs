@@ -132,8 +132,12 @@ public class Main {
 				node.color = canColor;
 				node.version = canVersion;
 			} else if (node.version > canVersion) {
-				canColor = node.color;
-				canVersion = node.version;
+				if (node.isChanged) {
+					canColor = node.color;
+					canVersion = node.version;					
+				} else {
+					canChange = false;
+				}
 			}
 			
 			node.isChanged = false;
