@@ -1,144 +1,179 @@
-import java.util.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Scanner;
+
+class Item {
+	int id, revenue, dest, earn;
+	boolean isOut;
+
+	public Item(int id, int revenue, int dest, boolean isOut) {
+		super();
+		this.id = id;
+		this.revenue = revenue;
+		this.dest = dest;
+		this.isOut = isOut;
+	}
+
+	@Override
+	public String toString() {
+		return "Item [id=" + id + ", revenue=" + revenue + ", dest=" + dest + ", earn=" + earn + ", isOut=" + isOut
+				+ "]";
+	}
+
+}
 
 public class Main {
-    final static int INF = 0x7fffffff; // INT 최대값을 정의합니다
-    final static int MAX_N = 2000; // 코드트리 랜드의 최대 도시 개수입니다
-    final static int MAX_ID = 30005; // 여행상품 ID의 최대값입니다
 
-    static int N, M; // 도시의 개수 N과 간선의 개수 M 입니다
-    static int[][] A = new int[MAX_N][MAX_N]; // 코드트리 랜드의 간선을 인접 행렬로 저장합니다
-    static int[] D = new int[MAX_N]; // Dijkstra 알고리즘을 통해 시작도시 S부터 각 도시까지의 최단경로를 저장합니다
-    static boolean[] isMade = new boolean[MAX_ID]; // 여행상품이 만들어졌는지 저장합니다
-    static boolean[] isCancel = new boolean[MAX_ID]; // 여행상품이 취소되었는지 저장합니다
-    static int S; // 여행 상품의 출발지 입니다
+	static int Q, n, m;
+	static int[][] map;
+	static int[] dp;
+	static int startCity = 0;
+	static Map<Integer, Item> items = new HashMap<>();
+	static int maxId;
+	static PriorityQueue<Item> itemQueue = new PriorityQueue<>(new Comparator<Item>() {
 
-    // 여행 상품을 정의합니다
-    static class Package implements Comparable<Package> {
-        int id; // 고유 식별자 ID
-        int revenue; // 매출
-        int dest; // 도착도시
-        int profit; // 여행사가 벌어들이는 수익
+		@Override
+		public int compare(Item o1, Item o2) {
+			if (o1.earn == o2.earn) {
+				return Integer.compare(o1.id, o2.id);
+			}
+			return Integer.compare(o2.earn, o1.earn);
+		}
+	});
 
-        public Package(int id, int revenue, int dest, int profit) {
-            this.id = id;
-            this.revenue = revenue;
-            this.dest = dest;
-            this.profit = profit;
-        }
+	public static void main(String[] args) throws IOException {
+		Scanner sc = new Scanner(System.in);
 
-        // 우선순위 큐 비교를 위한 compareTo 메서드를 오버라이드합니다
-        @Override
-        public int compareTo(Package other) {
-            if (this.profit == other.profit) {
-                return Integer.compare(this.id, other.id); // profit이 같으면 id가 작은 순으로
-            }
-            return Integer.compare(other.profit, this.profit); // profit이 클수록 우선 순위 높게
-        }
-    }
+		Q = sc.nextInt();
 
-    static PriorityQueue<Package> pq = new PriorityQueue<>(); // 최적의 여행 상품을 찾기 위한 우선순위 큐를 사용합니다
+		int comm = -1;
 
-    static void dijkstra() {
-        boolean[] visit = new boolean[N];
-        Arrays.fill(D, INF);
-        D[S] = 0;
+		for (int i = 0; i < Q; i++) {
+			comm = sc.nextInt();
 
-        for (int i = 0; i < N - 1; i++) {
-            int v = -1, minDist = INF;
-            for (int j = 0; j < N; j++) {
-                if (!visit[j] && D[j] < minDist) {
-                    v = j;
-                    minDist = D[j];
-                }
-            }
-            if (v == -1) break; // 더 이상 방문할 도시가 없으면 종료
-            visit[v] = true;
-            for (int j = 0; j < N; j++) {
-                if (!visit[j] && A[v][j] != INF && D[j] > D[v] + A[v][j]) {
-                    D[j] = D[v] + A[v][j];
-                }
-            }
-        }
-    }
+			switch (comm) {
+			case 100:
+				n = sc.nextInt();
+				m = sc.nextInt();
 
-    static void buildLand(Scanner sc) {
-        N = sc.nextInt();
-        M = sc.nextInt();
-        for (int i = 0; i < N; i++) {
-            Arrays.fill(A[i], INF);
-            A[i][i] = 0; // 자기 자신으로 가는 거리는 0
-        }
-        for (int i = 0; i < M; i++) {
-            int u = sc.nextInt();
-            int v = sc.nextInt();
-            int w = sc.nextInt();
-            A[u][v] = Math.min(A[u][v], w);
-            A[v][u] = Math.min(A[v][u], w);
-        }
-    }
+				map = new int[n][n];
 
-    static void addPackage(int id, int revenue, int dest) {
-        isMade[id] = true;
-        int profit = revenue - D[dest];
-        pq.offer(new Package(id, revenue, dest, profit));
-    }
+				for (int j = 0; j < n; j++) {
+					Arrays.fill(map[j], Integer.MAX_VALUE);
+				}
 
-    static void cancelPackage(int id) {
-        if (isMade[id]) isCancel[id] = true;
-    }
+				for (int j = 0; j < m; j++) {
+					int s = sc.nextInt();
+					int e = sc.nextInt();
+					int w = sc.nextInt();
 
-    static int sellPackage() {
-        while (!pq.isEmpty()) {
-            Package p = pq.peek();
-            if (p.profit < 0) break;
-            pq.poll();
-            if (!isCancel[p.id]) {
-                return p.id;
-            }
-        }
-        return -1;
-    }
+					if (map[s][e] > w)
+						map[s][e] = w;
 
-    static void changeStart(Scanner sc) {
-        S = sc.nextInt();
-        dijkstra();
-        List<Package> packages = new ArrayList<>();
-        while (!pq.isEmpty()) {
-            packages.add(pq.poll());
-        }
-        for (Package p : packages) {
-            addPackage(p.id, p.revenue, p.dest);
-        }
-    }
+					if (map[e][s] > w)
+						map[e][s] = w;
 
-    public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
-        int Q = sc.nextInt();
-        while (Q-- > 0) {
-            int T = sc.nextInt();
-            switch (T) {
-                case 100:
-                    buildLand(sc);
-                    dijkstra();
-                    break;
-                case 200:
-                    int id = sc.nextInt();
-                    int revenue = sc.nextInt();
-                    int dest = sc.nextInt();
-                    addPackage(id, revenue, dest);
-                    break;
-                case 300:
-                    int cancelId = sc.nextInt();
-                    cancelPackage(cancelId);
-                    break;
-                case 400:
-                    System.out.println(sellPackage());
-                    break;
-                case 500:
-                    changeStart(sc);
-                    break;
-            }
-        }
-        sc.close();
-    }
+				}
+
+				dijkstra();
+
+				break;
+			case 200:
+				addItem(sc.nextInt(), sc.nextInt(), sc.nextInt(), false);
+				break;
+			case 300:
+				removeItem(sc.nextInt());
+				break;
+			case 400:
+				System.out.println(sellGreatItem());
+				break;
+			case 500:
+				changeStartPoint(sc.nextInt());
+				break;
+			}
+		}
+
+		sc.close();
+	}
+
+	private static void changeStartPoint(int s) {
+		startCity = s;
+
+		dijkstra();
+
+		List<Item> packages = new ArrayList<>();
+
+		while (!itemQueue.isEmpty()) {
+			packages.add(itemQueue.poll());
+		}
+		
+		for (Item item : packages) {
+			addItem(item.id, item.revenue, item.dest, item.isOut);
+		}
+	}
+
+	private static int sellGreatItem() {
+		while (!itemQueue.isEmpty()) {
+			Item candi = itemQueue.peek();
+
+			if (candi.earn < 0) {
+				break;
+			}
+			
+			itemQueue.poll();
+			
+			if (!candi.isOut) {
+				return candi.id;
+			}
+		}
+
+		return -1;
+	}
+
+	private static void removeItem(int id) {
+		if (items.containsKey(id))
+			items.get(id).isOut = true;
+	}
+
+	private static void addItem(int id, int revenue, int dest, boolean isOut) {
+		if (maxId < id) {
+			maxId = id;
+		}
+		Item item = new Item(id, revenue, dest, isOut);
+		item.earn = revenue - dp[dest];
+		items.put(id, item);
+		itemQueue.add(item);
+	}
+
+	private static void dijkstra() {
+		boolean[] visited = new boolean[n];
+
+		dp = new int[n];
+		Arrays.fill(dp, Integer.MAX_VALUE);
+		dp[startCity] = 0;
+
+		for (int i = 0; i < n - 1; i++) {
+			int v = 0, minDist = Integer.MAX_VALUE;
+			for (int j = 0; j < n; j++) {
+				if (!visited[j] && minDist > dp[j]) {
+					v = j;
+					minDist = dp[j];
+				}
+			}
+			visited[v] = true;
+			for (int j = 0; j < n; j++) {
+				if (!visited[j] && dp[v] != Integer.MAX_VALUE && map[v][j] != Integer.MAX_VALUE
+						&& dp[j] > dp[v] + map[v][j]) {
+					dp[j] = dp[v] + map[v][j];
+				}
+			}
+		}
+	}
 }
