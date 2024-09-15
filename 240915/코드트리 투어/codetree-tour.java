@@ -131,31 +131,30 @@ public class Main {
 	}
 
 	private static int sellGreatItem() {
-		int result = -1;
+	    int result = -1;
+	    int size = itemQueue.size(); // 큐의 초기 크기 저장
+	    List<Item> tempList = new ArrayList<>(); // 임시로 저장할 List
 
-		LinkedList<Item> dim = new LinkedList<>();
+	    for (int i = 0; i < size; i++) {
+	        Item candi = itemQueue.poll(); // 큐에서 항목을 가져옴
 
-		while (!itemQueue.isEmpty()) {
-			Item candi = itemQueue.poll();
+	        if (candi.isOut) {
+	            continue; // 이미 제거된 항목은 무시
+	        } else if (candi.earn < 0) {
+	            tempList.add(candi); // 조건을 만족하지 않는 항목을 임시 리스트에 저장
+	        } else {
+	            result = candi.id;
+	            candi.isOut = true; // 항목을 판매로 표시
+	            break;
+	        }
+	    }
 
-			if (candi.isOut) {
-				continue;
-			} else if (candi.earn < 0) {
-				dim.add(candi);
-				continue;
-			} else {
-				result = candi.id;
-				candi.isOut = true;
-				break;
-			}
-		}
+	    // 모든 임시 리스트 항목을 다시 큐에 추가
+	    itemQueue.addAll(tempList);
 
-		while (!dim.isEmpty()) {
-			itemQueue.add(dim.pollFirst());
-		}
-
-		return result;
+	    return result;
 	}
+
 
 	private static void removeItem(int id) {
 		if (items.containsKey(id))
