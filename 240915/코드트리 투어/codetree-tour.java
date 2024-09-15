@@ -35,7 +35,7 @@ public class Main {
 	static Map<Integer, Integer>[] map;
 	static int[] dp;
 	static int startCity = 0;
-	static Item[] items = new Item[30_001];
+	static Map<Integer, Item> items = new HashMap<>();
 	static int maxId;
 	static PriorityQueue<Item> itemQueue = new PriorityQueue<>(new Comparator<Item>() {
 
@@ -118,8 +118,8 @@ public class Main {
 		itemQueue.clear();
 
 		for (int i = 0; i <= maxId; i++) {
-			if (items[i] != null) {
-				Item nextItem = items[i];
+			if (items.containsKey(i)) {
+				Item nextItem = items.get(i);
 
 				if (!nextItem.isOut) {
 					nextItem.earn = nextItem.revenue - dp[nextItem.dest];
@@ -158,8 +158,8 @@ public class Main {
 	}
 
 	private static void removeItem(int id) {
-		if (items[id] != null)
-			items[id].isOut = true;
+		if (items.containsKey(id))
+			items.get(id).isOut = true;
 	}
 
 	private static void addItem(int id, int revenue, int dest) {
@@ -168,7 +168,7 @@ public class Main {
 		}
 		Item item = new Item(id, revenue, dest);
 		item.earn = revenue - dp[dest];
-		items[id] = item;
+		items.put(id, item);
 		itemQueue.add(item);
 	}
 
