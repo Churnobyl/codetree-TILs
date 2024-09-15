@@ -36,6 +36,7 @@ public class Main {
 	static int[] dp;
 	static int startCity = 0;
 	static Item[] items = new Item[30_001];
+	static int maxId;
 	static PriorityQueue<Item> itemQueue = new PriorityQueue<>(new Comparator<Item>() {
 
 		@Override
@@ -110,41 +111,33 @@ public class Main {
 	}
 
 	private static void changeStartPoint(int s) {
-		PriorityQueue<Item> newList = new PriorityQueue<>(new Comparator<Item>() {
-
-			@Override
-			public int compare(Item o1, Item o2) {
-				if (o1.earn == o2.earn) {
-					return Integer.compare(o1.id, o2.id);
-				}
-				return Integer.compare(o2.earn, o1.earn);
-			}
-		});
-
 		startCity = s;
 
 		dijkstra();
-
-		while (!itemQueue.isEmpty()) {
-			Item nextItem = itemQueue.poll();
-
-			if (!nextItem.isOut) {
-				nextItem.earn = nextItem.revenue - dp[nextItem.dest];
-				newList.add(nextItem);
-			}
-		}
 		
-		itemQueue = newList;
+		itemQueue.clear();
+
+		for (int i = 1; i <= maxId; i++) {
+			if (items[i] != null) {
+				Item nextItem = items[i];
+
+				if (!nextItem.isOut) {
+					nextItem.earn = nextItem.revenue - dp[nextItem.dest];
+					itemQueue.add(nextItem);
+				}
+			}
+
+		}
 	}
 
 	private static int sellGreatItem() {
 		int result = -1;
-		
+
 		LinkedList<Item> dim = new LinkedList<>();
 
 		while (!itemQueue.isEmpty()) {
 			Item candi = itemQueue.poll();
-			
+
 			if (candi.isOut) {
 				continue;
 			} else if (candi.earn < 0) {
@@ -155,7 +148,7 @@ public class Main {
 				break;
 			}
 		}
-		
+
 		while (!dim.isEmpty()) {
 			itemQueue.add(dim.pollFirst());
 		}
@@ -169,6 +162,9 @@ public class Main {
 	}
 
 	private static void addItem(int id, int revenue, int dest) {
+		if (maxId < id) {
+			maxId = id;
+		}
 		Item item = new Item(id, revenue, dest);
 		item.earn = revenue - dp[dest];
 		items[id] = item;
