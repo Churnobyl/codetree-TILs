@@ -173,29 +173,26 @@ public class Main {
 	}
 
 	private static void dijkstra() {
-		dp = new int[n];
+	    dp = new int[n];
+	    Arrays.fill(dp, Integer.MAX_VALUE);
+	    dp[startCity] = 0;
 
-		Arrays.fill(dp, Integer.MAX_VALUE);
+	    PriorityQueue<Integer> pq = new PriorityQueue<>(Comparator.comparingInt(i -> dp[i]));
+	    pq.add(startCity);
 
-		dp[startCity] = 0;
+	    while (!pq.isEmpty()) {
+	        int nxt = pq.poll();
 
-		Queue<Integer> queue = new LinkedList<>();
+	        for (int i = 0; i < n; i++) {
+	            if (map[nxt].containsKey(i)) {
+	                int weight = map[nxt].get(i);
 
-		queue.add(startCity);
-
-		while (!queue.isEmpty()) {
-			int nxt = queue.poll();
-
-			for (int i = 0; i < n; i++) {
-				if (map[nxt].containsKey(i)) {
-					int weight = map[nxt].get(i);
-
-					if (dp[nxt] + weight < dp[i]) {
-						dp[i] = dp[nxt] + weight;
-						queue.add(i);
-					}
-				}
-			}
-		}
+	                if (dp[nxt] + weight < dp[i]) {
+	                    dp[i] = dp[nxt] + weight;
+	                    pq.add(i);
+	                }
+	            }
+	        }
+	    }
 	}
 }
