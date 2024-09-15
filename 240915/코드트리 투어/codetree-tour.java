@@ -117,7 +117,7 @@ public class Main {
 		
 		itemQueue.clear();
 
-		for (int i = 1; i <= maxId; i++) {
+		for (int i = 0; i <= maxId; i++) {
 			if (items[i] != null) {
 				Item nextItem = items[i];
 
@@ -145,6 +145,7 @@ public class Main {
 				continue;
 			} else {
 				result = candi.id;
+				candi.isOut = true;
 				break;
 			}
 		}
