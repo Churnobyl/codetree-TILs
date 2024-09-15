@@ -173,6 +173,7 @@ public class Main {
 
 	private static void dijkstra() {
 	    dp = new int[n];
+	    boolean[] visited = new boolean[n];
 	    Arrays.fill(dp, Integer.MAX_VALUE);
 	    dp[startCity] = 0;
 
@@ -181,6 +182,9 @@ public class Main {
 
 	    while (!pq.isEmpty()) {
 	        int nxt = pq.poll();
+	        
+	        if (visited[nxt]) continue;
+	        visited[nxt] = true;
 
 	        for (int i = 0; i < n; i++) {
 	            if (map[nxt].containsKey(i)) {
