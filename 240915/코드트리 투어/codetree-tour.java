@@ -1,13 +1,10 @@
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
-import java.util.Queue;
 import java.util.Scanner;
 
 class Item {
@@ -32,7 +29,7 @@ class Item {
 public class Main {
 
 	static int Q, n, m;
-	static Map<Integer, Integer>[] map;
+	static int[][] map;
 	static int[] dp;
 	static int startCity = 0;
 	static Map<Integer, Item> items = new HashMap<>();
@@ -63,10 +60,10 @@ public class Main {
 				n = sc.nextInt();
 				m = sc.nextInt();
 
-				map = new HashMap[n];
+				map = new int[n][n];
 
 				for (int j = 0; j < n; j++) {
-					map[j] = new HashMap<>();
+					Arrays.fill(map[j], Integer.MAX_VALUE);
 				}
 
 				for (int j = 0; j < m; j++) {
@@ -74,19 +71,11 @@ public class Main {
 					int e = sc.nextInt();
 					int w = sc.nextInt();
 
-					if (map[s].containsKey(e)) {
-						if (map[s].get(e) > w)
-							map[s].put(e, w);
-					} else {
-						map[s].put(e, w);
-					}
+					if (map[s][e] > w)
+						map[s][e] = w;
 
-					if (map[e].containsKey(s)) {
-						if (map[e].get(s) > w)
-							map[e].put(s, w);
-					} else {
-						map[e].put(s, w);
-					}
+					if (map[e][s] > w)
+						map[e][s] = w;
 
 				}
 
@@ -108,13 +97,14 @@ public class Main {
 			}
 		}
 
+		sc.close();
 	}
 
 	private static void changeStartPoint(int s) {
 		startCity = s;
 
 		dijkstra();
-		
+
 		itemQueue.clear();
 
 		for (int i = 0; i <= maxId; i++) {
@@ -131,30 +121,31 @@ public class Main {
 	}
 
 	private static int sellGreatItem() {
-	    int result = -1;
-	    int size = itemQueue.size(); // 큐의 초기 크기 저장
-	    List<Item> tempList = new ArrayList<>(); // 임시로 저장할 List
+		int result = -1;
 
-	    for (int i = 0; i < size; i++) {
-	        Item candi = itemQueue.poll(); // 큐에서 항목을 가져옴
+		LinkedList<Item> dim = new LinkedList<>();
 
-	        if (candi.isOut) {
-	            continue; // 이미 제거된 항목은 무시
-	        } else if (candi.earn < 0) {
-	            tempList.add(candi); // 조건을 만족하지 않는 항목을 임시 리스트에 저장
-	        } else {
-	            result = candi.id;
-	            candi.isOut = true; // 항목을 판매로 표시
-	            break;
-	        }
-	    }
+		while (!itemQueue.isEmpty()) {
+			Item candi = itemQueue.poll();
 
-	    // 모든 임시 리스트 항목을 다시 큐에 추가
-	    itemQueue.addAll(tempList);
+			if (candi.isOut) {
+				continue;
+			} else if (candi.earn < 0) {
+				dim.add(candi);
+				continue;
+			} else {
+				result = candi.id;
+				candi.isOut = true;
+				break;
+			}
+		}
 
-	    return result;
+		while (!dim.isEmpty()) {
+			itemQueue.add(dim.pollFirst());
+		}
+
+		return result;
 	}
-
 
 	private static void removeItem(int id) {
 		if (items.containsKey(id))
@@ -172,30 +163,27 @@ public class Main {
 	}
 
 	private static void dijkstra() {
-	    dp = new int[n];
-	    boolean[] visited = new boolean[n];
-	    Arrays.fill(dp, Integer.MAX_VALUE);
-	    dp[startCity] = 0;
+		boolean[] visited = new boolean[n];
 
-	    PriorityQueue<Integer> pq = new PriorityQueue<>(Comparator.comparingInt(i -> dp[i]));
-	    pq.add(startCity);
+		dp = new int[n];
+		Arrays.fill(dp, Integer.MAX_VALUE);
+		dp[startCity] = 0;
 
-	    while (!pq.isEmpty()) {
-	        int nxt = pq.poll();
-	        
-	        if (visited[nxt]) continue;
-	        visited[nxt] = true;
-
-	        for (int i = 0; i < n; i++) {
-	            if (map[nxt].containsKey(i)) {
-	                int weight = map[nxt].get(i);
-
-	                if (dp[nxt] + weight < dp[i]) {
-	                    dp[i] = dp[nxt] + weight;
-	                    pq.add(i);
-	                }
-	            }
-	        }
-	    }
+		for (int i = 0; i < n - 1; i++) {
+			int v = 0, minDist = Integer.MAX_VALUE;
+			for (int j = 0; j < n; j++) {
+				if (!visited[j] && minDist > dp[j]) {
+					v = j;
+					minDist = dp[j];
+				}
+			}
+			visited[v] = true;
+			for (int j = 0; j < n; j++) {
+				if (!visited[j] && dp[v] != Integer.MAX_VALUE && map[v][j] != Integer.MAX_VALUE
+						&& dp[j] > dp[v] + map[v][j]) {
+					dp[j] = dp[v] + map[v][j];
+				}
+			}
+		}
 	}
 }
