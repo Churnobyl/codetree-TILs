@@ -84,14 +84,13 @@ public class Main {
         for (int num = 1; num < idx; num++) {
             int x = map[num];
 
+            if (x == -1) continue;
 
             if (prevIndex == 0) {
                 prevIndex = num;
                 prevX = x;
                 continue;
             }
-
-            if (x == -1) continue;
 
             if (x - prevX > dist) {
                 prevIndex = num;
