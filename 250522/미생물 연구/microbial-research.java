@@ -2,269 +2,197 @@ import java.io.*;
 import java.util.*;
 
 public class Main {
-    static int[] dy = {1, -1, 0, 0};
-    static int[] dx = {0, 0, 1, -1};
+    static final int MAX = 100;
+    static int N, Q;
+    static int[][] MAP = new int[MAX][MAX];
 
-    static class MicroOrganism implements Comparable<MicroOrganism> {
-        int id, y, x, num, width, height;
-        boolean[][] deletedMap;
-
-        public MicroOrganism(int id, int y, int x, int num, int width, int height, boolean[][] deletedMap) {
-            this.id = id;
-            this.y = y;
-            this.x = x;
-            this.num = num;
-            this.width = width;
-            this.height = height;
-            this.deletedMap = deletedMap;
-        }
-
-        public boolean isSplit() {
-            int cnt = 0;
-            boolean[][] visited = new boolean[height][width];
-            for (int i = 0; i < height; i++) {
-                for (int j = 0; j < width; j++) {
-                    if (!deletedMap[i][j] && !visited[i][j]) {
-                        bfs(i, j, visited);
-                        cnt++;
-                        if (cnt == 2) return true;
-                    }
-                }
-            }
-            return false;
-        }
-
-        public void reduce() {
-            List<Integer> rowsToKeep = new ArrayList<>();
-            List<Integer> colsToKeep = new ArrayList<>();
-
-            for (int i = 0; i < height; i++) {
-                boolean allDeleted = true;
-                for (int j = 0; j < width; j++) {
-                    if (!deletedMap[i][j]) {
-                        allDeleted = false;
-                        break;
-                    }
-                }
-                if (!allDeleted) rowsToKeep.add(i);
-            }
-
-            for (int j = 0; j < width; j++) {
-                boolean allDeleted = true;
-                for (int i = 0; i < height; i++) {
-                    if (!deletedMap[i][j]) {
-                        allDeleted = false;
-                        break;
-                    }
-                }
-                if (!allDeleted) colsToKeep.add(j);
-            }
-
-            boolean[][] newDeletedMap = new boolean[rowsToKeep.size()][colsToKeep.size()];
-            int newNum = 0;
-
-            for (int i = 0; i < rowsToKeep.size(); i++) {
-                for (int j = 0; j < colsToKeep.size(); j++) {
-                    int oldI = rowsToKeep.get(i);
-                    int oldJ = colsToKeep.get(j);
-                    newDeletedMap[i][j] = deletedMap[oldI][oldJ];
-                    if (!newDeletedMap[i][j]) newNum++;
-                }
-            }
-
-            this.deletedMap = newDeletedMap;
-            this.height = rowsToKeep.size();
-            this.width = colsToKeep.size();
-            this.num = newNum;
-        }
-
-        private void bfs(int y, int x, boolean[][] visited) {
-            Queue<int[]> queue = new ArrayDeque<>();
-            queue.add(new int[]{y, x});
-            visited[y][x] = true;
-
-            while (!queue.isEmpty()) {
-                int[] cur = queue.poll();
-                for (int d = 0; d < 4; d++) {
-                    int ny = cur[0] + dy[d];
-                    int nx = cur[1] + dx[d];
-                    if (ny < 0 || ny >= height || nx < 0 || nx >= width) continue;
-                    if (!deletedMap[ny][nx] && !visited[ny][nx]) {
-                        visited[ny][nx] = true;
-                        queue.add(new int[]{ny, nx});
-                    }
-                }
-            }
-        }
-
-        @Override
-        public int compareTo(MicroOrganism o) {
-            if (this.num == o.num) return Integer.compare(this.id, o.id);
-            return Integer.compare(o.num, this.num);
+    static class Query {
+        int r1, c1, r2, c2;
+        Query(int r1, int c1, int r2, int c2) {
+            this.r1 = r1; this.c1 = c1; this.r2 = r2; this.c2 = c2;
         }
     }
+    static Query[] queries;
 
-    static int N, Q;
-    static int[][] map;
-    static Map<Integer, MicroOrganism> microOrganismList = new HashMap<>();
-    static TreeSet<MicroOrganism> microOrganisms = new TreeSet<>();
+    static class Micro {
+        int id, minR, minC, maxR, maxC, count;
+        Micro(int id, int minR, int minC, int maxR, int maxC, int count) {
+            this.id = id; this.minR = minR; this.minC = minC;
+            this.maxR = maxR; this.maxC = maxC; this.count = count;
+        }
+    }
+    static List<Micro> micros;
+    static boolean[] dead;
+    static int[] dr = {-1, 0, 1, 0};
+    static int[] dc = {0, 1, 0, -1};
 
-    public static void main(String[] args) throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    static void input(BufferedReader br) throws IOException {
         StringTokenizer st = new StringTokenizer(br.readLine());
-
         N = Integer.parseInt(st.nextToken());
         Q = Integer.parseInt(st.nextToken());
-
-        map = new int[N][N];
-
-        for (int i = 1; i <= Q; i++) {
+        queries = new Query[Q + 1];
+        for (int q = 1; q <= Q; q++) {
             st = new StringTokenizer(br.readLine());
             int r1 = Integer.parseInt(st.nextToken());
             int c1 = Integer.parseInt(st.nextToken());
             int r2 = Integer.parseInt(st.nextToken());
             int c2 = Integer.parseInt(st.nextToken());
-
-            addMicroOrganism(i, r1, c1, r2, c2);
-            moveNewPetriDish();
-            System.out.println(calculateInteractionSum());
+            queries[q] = new Query(r1, c1, r2, c2);
         }
     }
 
-    private static void addMicroOrganism(int id, int r1, int c1, int r2, int c2) {
-        int height = r2 - r1;
-        int width = c2 - c1;
-        MicroOrganism mo = new MicroOrganism(id, r1, c1, height * width, width, height, new boolean[height][width]);
-        microOrganisms.add(mo);
-        microOrganismList.put(id, mo);
-        placeNewOrganism(mo);
+    static void insert(int id, int r1, int c1, int r2, int c2) {
+        for (int r = r1; r < r2; r++)
+            for (int c = c1; c < c2; c++)
+                MAP[r][c] = id;
     }
 
-    private static void placeNewOrganism(MicroOrganism mo) {
-        Set<MicroOrganism> affected = new HashSet<>();
+    static boolean[][] visit = new boolean[MAX][MAX];
 
-        for (int i = mo.y; i < mo.y + mo.height; i++) {
-            for (int j = mo.x; j < mo.x + mo.width; j++) {
-                if (map[i][j] != 0 && map[i][j] != mo.id) {
-                    int otherId = map[i][j];
-                    MicroOrganism other = microOrganismList.get(otherId);
-                    int oy = i - other.y;
-                    int ox = j - other.x;
-                    if (oy >= 0 && oy < other.height && ox >= 0 && ox < other.width) {
-                        if (!other.deletedMap[oy][ox]) {
-                            other.deletedMap[oy][ox] = true;
-                            other.num--;
-                            affected.add(other);
-                        }
-                    }
+    static Micro bfs(int r, int c) {
+        Queue<int[]> q = new LinkedList<>();
+        q.offer(new int[]{r, c});
+        visit[r][c] = true;
+        int minR = r, minC = c, maxR = r, maxC = c;
+        int cnt = 1;
+        int id = MAP[r][c];
+
+        while (!q.isEmpty()) {
+            int[] cur = q.poll();
+            for (int d = 0; d < 4; d++) {
+                int nr = cur[0] + dr[d];
+                int nc = cur[1] + dc[d];
+                if (nr < 0 || nr >= N || nc < 0 || nc >= N) continue;
+                if (MAP[nr][nc] != id || visit[nr][nc]) continue;
+                visit[nr][nc] = true;
+                q.offer(new int[]{nr, nc});
+                cnt++;
+                minR = Math.min(minR, nr);
+                minC = Math.min(minC, nc);
+                maxR = Math.max(maxR, nr);
+                maxC = Math.max(maxC, nc);
+            }
+        }
+        return new Micro(id, minR, minC, maxR, maxC, cnt);
+    }
+
+    static void findLiveMicro() {
+        micros = new ArrayList<>();
+        dead = new boolean[MAX];
+        boolean[] check = new boolean[MAX];
+
+        for (int r = 0; r < N; r++)
+            for (int c = 0; c < N; c++)
+                visit[r][c] = false;
+
+        for (int r = 0; r < N; r++) {
+            for (int c = 0; c < N; c++) {
+                int id = MAP[r][c];
+                if (id == 0 || dead[id] || visit[r][c]) continue;
+                Micro m = bfs(r, c);
+                if (check[id]) {
+                    dead[id] = true;
+                    continue;
                 }
-                map[i][j] = mo.id;
+                check[id] = true;
+                micros.add(m);
             }
         }
-
-        for (MicroOrganism m : affected) {
-            microOrganisms.remove(m);
-            m.reduce();
-            if (m.num > 0 && !m.isSplit()) {
-                microOrganisms.add(m);
-            } else {
-                microOrganismList.remove(m.id);
-                removeFromMap(m);
-            }
-        }
-
-        microOrganisms.add(mo);
-        microOrganismList.put(mo.id, mo);
+        List<Micro> alive = new ArrayList<>();
+        for (Micro m : micros)
+            if (!dead[m.id]) alive.add(m);
+        micros = alive;
     }
 
-    private static void removeFromMap(MicroOrganism mo) {
-        for (int i = 0; i < mo.height; i++) {
-            for (int j = 0; j < mo.width; j++) {
-                if (!mo.deletedMap[i][j]) {
-                    int y = mo.y + i;
-                    int x = mo.x + j;
-                    if (map[y][x] == mo.id) map[y][x] = 0;
-                }
-            }
-        }
+    static void sortMicro() {
+        micros.sort((a, b) -> {
+            if (a.count != b.count) return b.count - a.count;
+            return a.id - b.id;
+        });
     }
 
-    private static void moveNewPetriDish() {
-        int[][] newMap = new int[N][N];
-        TreeSet<MicroOrganism> newSet = new TreeSet<>();
-        Map<Integer, MicroOrganism> newList = new HashMap<>();
-
-        for (MicroOrganism mo : microOrganisms) {
-            mo.reduce();
-            if (mo.num == 0 || mo.height == 0 || mo.width == 0) continue;
-
-            boolean placed = false;
-            for (int sy = 0; sy <= N - mo.height && !placed; sy++) {
-                for (int sx = 0; sx <= N - mo.width && !placed; sx++) {
-                    if (canPlace(newMap, mo, sy, sx)) {
-                        placeOnMap(newMap, mo, sy, sx);
-                        mo.y = sy;
-                        mo.x = sx;
-                        newSet.add(mo);
-                        newList.put(mo.id, mo);
-                        placed = true;
-                    }
-                }
-            }
-        }
-
-        map = newMap;
-        microOrganisms = newSet;
-        microOrganismList = newList;
-    }
-
-    private static boolean canPlace(int[][] newMap, MicroOrganism mo, int sy, int sx) {
-        for (int i = 0; i < mo.height; i++) {
-            for (int j = 0; j < mo.width; j++) {
-                if (mo.deletedMap[i][j]) continue;
-                if (newMap[sy + i][sx + j] != 0) return false;
+    static boolean checkMove(int[][] newMAP, Micro m, int fr, int fc) {
+        for (int r = m.minR; r <= m.maxR; r++) {
+            for (int c = m.minC; c <= m.maxC; c++) {
+                if (MAP[r][c] != m.id) continue;
+                int newR = fr - m.minR + r;
+                int newC = fc - m.minC + c;
+                if (newR >= N || newC >= N) return false;
+                if (newMAP[newR][newC] != 0) return false;
             }
         }
         return true;
     }
 
-    private static void placeOnMap(int[][] newMap, MicroOrganism mo, int sy, int sx) {
-        for (int i = 0; i < mo.height; i++) {
-            for (int j = 0; j < mo.width; j++) {
-                if (!mo.deletedMap[i][j]) newMap[sy + i][sx + j] = mo.id;
-            }
-        }
+    static void move(int[][] newMAP, Micro m, int fr, int fc) {
+        for (int r = m.minR; r <= m.maxR; r++)
+            for (int c = m.minC; c <= m.maxC; c++)
+                if (MAP[r][c] == m.id)
+                    newMAP[fr - m.minR + r][fc - m.minC + c] = m.id;
     }
 
-    private static long calculateInteractionSum() {
-        long total = 0;
-        Set<String> visited = new HashSet<>();
+    static void moveMicro(int[][] newMAP, Micro m) {
+        for (int r = 0; r < N; r++)
+            for (int c = 0; c < N; c++)
+                if (checkMove(newMAP, m, r, c)) {
+                    move(newMAP, m, r, c);
+                    return;
+                }
+    }
 
-        for (MicroOrganism a : microOrganisms) {
-            for (int i = 0; i < a.height; i++) {
-                for (int j = 0; j < a.width; j++) {
-                    if (a.deletedMap[i][j]) continue;
-                    int y = a.y + i;
-                    int x = a.x + j;
+    static void moveAll() {
+        int[][] newMAP = new int[MAX][MAX];
+        for (Micro m : micros)
+            moveMicro(newMAP, m);
+        for (int r = 0; r < N; r++)
+            for (int c = 0; c < N; c++)
+                MAP[r][c] = newMAP[r][c];
+    }
 
-                    for (int d = 0; d < 4; d++) {
-                        int ny = y + dy[d];
-                        int nx = x + dx[d];
-                        if (ny < 0 || nx < 0 || ny >= N || nx >= N) continue;
-                        int otherId = map[ny][nx];
-                        if (otherId != 0 && otherId != a.id) {
-                            MicroOrganism b = microOrganismList.get(otherId);
-                            String key = Math.min(a.id, b.id) + "-" + Math.max(a.id, b.id);
-                            if (!visited.contains(key)) {
-                                visited.add(key);
-                                total += (long) a.num * b.num;
-                            }
-                        }
-                    }
+    static int getCount(int id) {
+        for (Micro m : micros)
+            if (m.id == id) return m.count;
+        return 0;
+    }
+
+    static int getScore(int maxID) {
+        boolean[][] company = new boolean[MAX][MAX];
+        for (int r = 0; r < N; r++) {
+            for (int c = 0; c < N; c++) {
+                if (MAP[r][c] == 0) continue;
+                for (int d = 0; d < 4; d++) {
+                    int nr = r + dr[d], nc = c + dc[d];
+                    if (nr < 0 || nr >= N || nc < 0 || nc >= N) continue;
+                    int id1 = MAP[r][c];
+                    int id2 = MAP[nr][nc];
+                    if (id1 == id2 || id2 == 0) continue;
+                    company[id1][id2] = true;
+                    company[id2][id1] = true;
                 }
             }
         }
+        int score = 0;
+        for (int i = 1; i <= maxID - 1; i++)
+            for (int k = i + 1; k <= maxID; k++)
+                if (company[i][k])
+                    score += getCount(i) * getCount(k);
+        return score;
+    }
 
-        return total;
+    static void simulate() {
+        for (int id = 1; id <= Q; id++) {
+            Query q = queries[id];
+            insert(id, q.r1, q.c1, q.r2, q.c2); // 미생물 투입
+            findLiveMicro(); // 살아있는 군집 탐색 (BFS, 분리시 죽음 처리)
+            sortMicro(); // 큰 군집, 번호순 정렬
+            moveAll();   // 새 배양 용기로 이동 (왼쪽 위부터)
+            System.out.println(getScore(id)); // 결과 출력
+        }
+    }
+
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        input(br);
+        simulate();
     }
 }
