@@ -84,10 +84,9 @@ public class Main {
             int k = now[3];
 
             if (y == r2 && x == c2) continue;
-            if (dp[y][x][k] < dist) continue; // 이미 더 빠른 경로로 도착
+            if (dp[y][x][k] < dist) continue;
 
             for (int dir = 0; dir < 4; dir++) {
-                // 1. 속도 유지
                 int ny = y + k * dy[dir];
                 int nx = x + k * dx[dir];
                 if (inRange(ny, nx) && isMove[y][x][ny][nx]) {
@@ -97,7 +96,6 @@ public class Main {
                     }
                 }
 
-                // 2. 속도 증가
                 for (int i = k + 1; i <= 5; i++) {
                     ny = y + i * dy[dir];
                     nx = x + i * dx[dir];
@@ -109,10 +107,9 @@ public class Main {
                         }
                     }
                 }
-            }
 
-            for (int t = 1; t < k; t++) { // 점프력 감소: t = 1 ~ k-1
-                for (int dir = 0; dir < 4; dir++) {
+                for (int t = 1; t < k; t++) {
+
                     int ny = y + t * dy[dir];
                     int nx = x + t * dx[dir];
                     if (inRange(ny, nx) && isMove[y][x][ny][nx]) {
@@ -124,6 +121,8 @@ public class Main {
                     }
                 }
             }
+
+
         }
 
         int answer = Integer.MAX_VALUE;
