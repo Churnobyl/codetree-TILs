@@ -38,6 +38,10 @@ public class Main {
     }
 
     private static int run(int r1, int c1, int r2, int c2) {
+        if (map[r1][c1] != '.' || map[r2][c2] != '.') {
+            return -1;
+        }
+
         int[][][] dp = new int[N][N][6];
         for (int i = 0; i < N; i++)
             for (int j = 0; j < N; j++)
@@ -56,9 +60,10 @@ public class Main {
             int k = now[3];
 
             if (y == r2 && x == c2) continue;
-            if (dp[y][x][k] < dist) continue;
+            if (dp[y][x][k] < dist) continue; // 이미 더 빠른 경로로 도착
 
             for (int dir = 0; dir < 4; dir++) {
+                // 1. 속도 유지
                 int ny = y + k * dy[dir];
                 int nx = x + k * dx[dir];
                 if (inRange(ny, nx) && map[ny][nx] != 'S' && checkSnake(y, x, ny, nx)) {
@@ -68,6 +73,7 @@ public class Main {
                     }
                 }
 
+                // 2. 속도 증가
                 for (int i = k + 1; i <= 5; i++) {
                     ny = y + i * dy[dir];
                     nx = x + i * dx[dir];
@@ -80,6 +86,7 @@ public class Main {
                     }
                 }
 
+                // 3. 속도 감소
                 for (int t = k - 1; t >= 1; t--) {
                     ny = y + t * dy[dir];
                     nx = x + t * dx[dir];
