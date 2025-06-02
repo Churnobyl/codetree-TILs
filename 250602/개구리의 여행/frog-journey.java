@@ -6,6 +6,7 @@ public class Main {
     static char[][] map;
     static int[] dy = {1, -1, 0, 0};
     static int[] dx = {0, 0, 1, -1};
+    static boolean[][][][] isMove;
 
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -23,6 +24,8 @@ public class Main {
         int Q = Integer.parseInt(br.readLine());
         StringBuilder sb = new StringBuilder();
 
+        makeIsMove();
+
         for (int i = 0; i < Q; i++) {
             StringTokenizer st = new StringTokenizer(br.readLine());
             int r1 = Integer.parseInt(st.nextToken()) - 1;
@@ -35,6 +38,27 @@ public class Main {
         }
 
         System.out.println(sb);
+    }
+
+    static void makeIsMove() {
+        isMove = new boolean[N][N][N][N];
+        for (int y = 0; y < N; y++) {
+            for (int x = 0; x < N; x++) {
+                if (map[y][x] != '.') continue;
+                for (int dir = 0; dir < 4; dir++) {
+                    for (int jump = 1; jump <= 5; jump++) {
+                        int ny = y + dy[dir] * jump;
+                        int nx = x + dx[dir] * jump;
+                        if (!inRange(ny, nx)) break;
+                        if (map[ny][nx] == '#') break;
+                        if (map[ny][nx] == 'S') continue;
+                        if (checkSnake(y, x, ny, nx)) {
+                            isMove[y][x][ny][nx] = true;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private static int run(int r1, int c1, int r2, int c2) {
@@ -66,7 +90,7 @@ public class Main {
                 // 1. 속도 유지
                 int ny = y + k * dy[dir];
                 int nx = x + k * dx[dir];
-                if (inRange(ny, nx) && map[ny][nx] != 'S' && checkSnake(y, x, ny, nx)) {
+                if (inRange(ny, nx) && isMove[y][x][ny][nx]) {
                     if (dp[ny][nx][k] > dist + 1) {
                         dp[ny][nx][k] = dist + 1;
                         pq.add(new int[]{dp[ny][nx][k], ny, nx, k});
@@ -77,7 +101,7 @@ public class Main {
                 for (int i = k + 1; i <= 5; i++) {
                     ny = y + i * dy[dir];
                     nx = x + i * dx[dir];
-                    if (inRange(ny, nx) && map[ny][nx] != 'S' && checkSnake(y, x, ny, nx)) {
+                    if (inRange(ny, nx) && isMove[y][x][ny][nx]) {
                         int cost = dist + getCost(k, i) + 1;
                         if (dp[ny][nx][i] > cost) {
                             dp[ny][nx][i] = cost;
@@ -85,12 +109,13 @@ public class Main {
                         }
                     }
                 }
+            }
 
-                // 3. 속도 감소
-                for (int t = k - 1; t >= 1; t--) {
-                    ny = y + t * dy[dir];
-                    nx = x + t * dx[dir];
-                    if (inRange(ny, nx) && map[ny][nx] != 'S' && checkSnake(y, x, ny, nx)) {
+            for (int t = 1; t < k; t++) { // 점프력 감소: t = 1 ~ k-1
+                for (int dir = 0; dir < 4; dir++) {
+                    int ny = y + t * dy[dir];
+                    int nx = x + t * dx[dir];
+                    if (inRange(ny, nx) && isMove[y][x][ny][nx]) {
                         int cost = dist + 2;
                         if (dp[ny][nx][t] > cost) {
                             dp[ny][nx][t] = cost;
