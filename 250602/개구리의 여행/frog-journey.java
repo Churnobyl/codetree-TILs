@@ -109,9 +109,8 @@ public class Main {
                 }
 
                 for (int t = 1; t < k; t++) {
-
-                    int ny = y + t * dy[dir];
-                    int nx = x + t * dx[dir];
+                    ny = y + t * dy[dir];
+                    nx = x + t * dx[dir];
                     if (inRange(ny, nx) && isMove[y][x][ny][nx]) {
                         int cost = dist + 2;
                         if (dp[ny][nx][t] > cost) {
