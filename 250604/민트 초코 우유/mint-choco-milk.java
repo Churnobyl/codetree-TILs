@@ -62,20 +62,21 @@ public class Main {
         spread(groups[1]);
         spread(groups[2]);
         spread(groups[3]);
+        // defense 모두 리셋
         for (int i = 0; i < N; i++) Arrays.fill(defense[i], false);
     }
 
     private static void spread(TreeSet<Group> group) {
-        for (Group g : group) {
+        List<Group> toSpread = new ArrayList<>(group);
+
+        for (Group g : toSpread) {
             int gr = g.reader[0], gc = g.reader[1];
 
             if (defense[gr][gc]) continue;
 
             int x = B[gr][gc] - 1;
             int dir = B[gr][gc] % 4;
-
             B[gr][gc] = 1;
-
             int sr = gr, sc = gc;
 
             while (x > 0) {
@@ -88,14 +89,14 @@ public class Main {
                 }
                 defense[nr][nc] = true;
 
-                if (x > B[nr][nc]) { // 강한 전파
+                if (x > B[nr][nc]) {
                     x -= (B[nr][nc] + 1);
                     B[nr][nc]++;
                     changeGroup(nr, nc, F[nr][nc], g.bit);
                     F[nr][nc] = g.bit;
                     sr = nr; sc = nc;
                     if (x <= 0) break;
-                } else { // 약한 전파
+                } else {
                     B[nr][nc] += x;
                     changeGroup(nr, nc, F[nr][nc], g.bit | F[nr][nc]);
                     F[nr][nc] = (g.bit | F[nr][nc]);
@@ -105,6 +106,7 @@ public class Main {
             }
         }
     }
+
 
     private static void changeGroup(int memY, int memX, int oldBit, int newBit) {
         int oldCnt = Integer.bitCount(oldBit);
